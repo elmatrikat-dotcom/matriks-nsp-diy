@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MATRIKS NSP 2025 - D.I. Yogyakarta</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-50">
+  <div id="app">Loading...</div>
+  <script>
+    const SUPABASE_URL = 'https://htfqmmxopaeetbtmfuzz.supabase.co';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imh0ZnFtbXhvcGFlZXRidG1mdXp6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjgwNDM3NTIsImV4cCI6MjA4MzYxOTc1Mn0.lSvo3-ZPX2IGGwdF4mVs08hEM1Bl4SCj6jC1_uCep_g';
+
+    let users = [
+      { id: '1', username: 'admin', password: 'admin123', name: 'NOOR SOTYO PRABOWO', role: 'kepala_seksi', kabupaten: 'Kabupaten Bantul' }
+    ];
+    let customers = [];
+    
+    async function loadData() {
+      try {
+        const res = await fetch(`${SUPABASE_URL}/rest/v1/users?select=*`, {
+          headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${SUPABASE_ANON_KEY}` }
+        });
+        if (res.ok) {
+          const data = await res.json();
+          if (data?.length > 0) users = data;
+        }
+        
+        const custRes = await fetch(`${SUPABASE_URL}/rest/v1/customers?select=*`, {
+          headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${SUPABASE_ANON_KEY}` }
+        });
+        if (custRes.ok) customers = await custRes.json() || [];
+      } catch (err) {
+        console.error('Load error:', err);
+      }
+      showLogin();
+    }
+
+    function showLogin() {
+      document.getElementById('app').innerHTML = `
+        <div class="min-h-screen bg-gradient-to-br from-green-50 to-green-100 flex items-center justify-center p-4">
+          <div class="bg-white rounded-2xl shadow-xl p-8 w-full max-w-md">
+            <h1 class="text-2xl font-bold text-center mb-8">MATRIKS NSP 2025</h1>
+            <p class="text-center text-gray-600 mb-6">D.I. Yogyakarta</p>
+            <input type="text" id="username" placeholder="Username" class="w-full px-4 py-3 border rounded-lg mb-4" value="admin" />
+            <input type="password" id="password" placeholder="Password" class="w-full px-4 py-3 border rounded-lg mb-4" value="admin123" onkeypress="if(event.key==='Enter')login()" />
+            <div id="error" class="hidden text-red-600 text-sm mb-4"></div>
+            <button onclick="login()" class="w-full bg-green-600 hover:bg-green-700 text-white py-3 rounded-lg">Masuk</button>
+            <p class="text-center text-sm text-gray-500 mt-4">Demo: admin / admin123</p>
+          </div>
+        </div>
+      `;
+    }
+
+    function login() {
+      const username = document.getElementById('username').value;
+      const password = document.getElementById('password').value;
+      const user = users.find(u => u.username === username && u.password === password);
+      
+      if (user) {
+        document.getElementById('app').innerHTML = `
+          <div class="min-h-screen bg-gray-50">
+            <div class="bg-green-600 text-white p-6">
+              <div class="container mx-auto flex justify-between items-center">
+                <div>
+                  <h1 class="text-2xl font-bold">MATRIKS NSP 2025</h1>
+                  <p class="text-sm">D.I. Yogyakarta</p>
+                </div>
+                <div>
+                  <p class="text-sm">${user.name}</p>
+                  <button onclick="location.reload()" class="text-sm underline">Keluar</button>
+                </div>
+              </div>
+            </div>
+            <div class="container mx-auto p-6">
+              <div class="grid md:grid-cols-3 gap-6">
+                <div class="bg-blue-500 text-white rounded-xl p-6">
+                  <p class="text-sm">Total User</p>
+                  <p class="text-4xl font-bold">${users.length}</p>
+                </div>
+                <div class="bg-green-500 text-white rounded-xl p-6">
+                  <p class="text-sm">Pengguna Air</p>
+                  <p class="text-4xl font-bold">${customers.length}</p>
+                </div>
+                <div class="bg-purple-500 text-white rounded-xl p-6">
+                  <p class="text-sm">Status</p>
+                  <p class="text-xl font-bold">✅ Online</p>
+                </div>
+              </div>
+              <div class="bg-white rounded-xl shadow-md p-6 mt-6">
+                <h2 class="text-xl font-bold mb-4">🎉 Login Berhasil!</h2>
+                <p class="text-gray-600 mb-4">Selamat datang di sistem MATRIKS NSP DIY 2025</p>
+                <div class="bg-green-50 border border-green-200 rounded-lg p-4">
+                  <p class="font-bold text-green-800">✅ Aplikasi sudah LIVE!</p>
+                  <p class="text-sm text-green-700 mt-2">Database terhubung dengan Supabase</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        `;
+      } else {
+        document.getElementById('error').textContent = 'Username atau password salah';
+        document.getElementById('error').classList.remove('hidden');
+      }
+    }
+
+    loadData();
+  </script>
+</body>
+</html>
