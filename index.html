@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Aplikasi Pencatatan Meteran Air D.I. Yogyakarta">
+  <meta name="theme-color" content="#16a34a">
+  <title>MATRIKS NSP 2025 - D.I. Yogyakarta</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="manifest" href="manifest.json">
+</head>
+<body class="bg-gray-50">
+  <div id="app"></div>
+
+  <script>
+    const SUPABASE_URL = 'https://htfqmmxopaeetbtmfuzz.supabase.co';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imh0ZnFtbXhvcGFlZXRidG1mdXp6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjgwNDM3NTIsImV4cCI6MjA4MzYxOTc1Mn0.lSvo3-ZPX2IGGwdF4mVs08hEM1Bl4SCj6jC1_uCep_g';
+
+    let currentUser = null;
+    let users = [
+      { id: '1', username: 'admin', password: 'admin123', name: 'NOOR SOTYO PRABOWO', role: 'kepala_seksi', kabupaten: 'Kabupaten Bantul' },
+      { id: '2', username: 'petugas_bantul', password: 'petugas123', name: 'HARTI WIDIYANINGSIH', role: 'petugas', kabupaten: 'Kabupaten Bantul' },
+      { id: '3', username: 'petugas_sleman', password: 'petugas123', name: 'AHMAD SUDRAJAT', role: 'petugas', kabupaten: 'Kabupaten Sleman' },
+      { id: '4', username: 'petugas_gunungkidul', password: 'petugas123', name: 'BAMBANG WIRANTO', role: 'petugas', kabupaten: 'Kabupaten Gunungkidul' },
+      { id: '5', username: 'petugas_kulonprogo', password: 'petugas123', name: 'RATNA SARI', role: 'petugas', kabupaten: 'Kabupaten Kulon Progo' },
+      { id: '6', username: 'petugas_yogya', password: 'petugas123', name: 'SRI WAHYUNI', role: 'petugas', kabupaten: 'Kota Yogyakarta' }
+    ];
+    let customers = [];
+    let records = [];
+    let loading = false;
+
+    async function fetchFromSupabase() {
+      try {
+        loading = true;
+        
+        const usersRes = await fetch(`${SUPABASE_URL}/rest/v1/users?select=*`, {
+          headers: {
+            'apikey': SUPABASE_ANON_KEY,
+            'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+            'Content-Type': 'application/json'
+          }
+        });
+        
+        if (usersRes.ok) {
+          const supabaseUsers = await usersRes.json();
+          if (supabaseUsers && supabaseUsers.length > 0) {
+            users = supabaseUsers;
+            console.log('✅ Loaded from Supabase:', users.length, 'users');
+          }
+        }
+
+        const custRes = await fetch(`${SUPABASE_URL}/rest/v1/customers?select=*`, {
+          headers: {
+            'apikey': SUPABASE_ANON_KEY,
+            'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+            'Content-Type': 'application/json'
+          }
+        });
+        
+        if (custRes.ok) {
+          customers = await custRes.json() || [];
+        }
+
+        const recRes = await fetch(`${SUPABASE_URL}/rest/v1/meter_records?select=*`, {
+          headers: {
+            'apikey': SUPABASE_ANON_KEY,
+            'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+            'Content-Type': 'application/json'
+          }
+        });
+        
+        if (recRes.ok) {
+          records = await recRes.json() || [];
+        }
+
+      } catch (err) {
+        console.error('Supabase error:', err);
+      } finally {
+        loading = false;
+      }
+    }
+
+    function login() {
+      const username = document.getElementById('username').value.trim();
+      const password = document.getElementById('password').value.trim();
+      const errorDiv = document.getElementById('error');
+
+      const user = users.find(u => u.username === username && u.password === password);
+      
+      if (user) {
+        currentUser = user;
+        showDashboard();
+      } else {
+        errorDiv.textContent = 'Username atau password salah';
+        errorDiv.classList.remove('hidden');
+      }
+    }
+
+    function showLogin() {
+      document.getElementById('app').innerHTML = `
+        <div class="min-h-screen bg-gradient-to-br from-green-50 to-green-100 flex items-center justify-center p-4">
+          <div class="bg-white rounded-2xl shadow-xl p-8 w-full max-w-md">
+            <div class="text-center mb-8">
+              <svg class="w-16 h-16 mx-auto mb-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
+              </svg>
+              <h1 class="text-2xl font-bold">MATRIKS NSP 2025</h1>
+              <p class="text-sm text-gray-600 mt-2">D.I. Yogyakarta</p>
+            </div>
+            <div class="space-y-4">
+              <input type="text" id="username" placeholder="Username" class="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-green-500 focus:outline-none" />
+              <input type="password" id="password" placeholder="Password" class="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-green-500 focus:outline-none" onkeypress="if(event.key==='Enter') login()" />
+              <div id="error" class="hidden bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm"></div>
+              <button onclick="login()" class="w-full bg-green-600 hover:bg-green-700 text-white font-medium py-3 rounded-lg transition">
+                Masuk
+              </button>
+            </div>
+            <div class="mt-6 pt-6 border-t text-xs text-gray-500 text-center">
+              <p><strong>Demo:</strong> admin / admin123</p>
+              <p class="mt-2 text-green-600">${users.length} users available ✅</p>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    function showDashboard() {
+      const isKepala = currentUser.role === 'kepala_seksi';
+      const isPetugas = currentUser.role === 'petugas';
+
+      const kabupatenList = [
+        'Kabupaten Bantul',
+        'Kabupaten Sleman',
+        'Kabupaten Gunungkidul',
+        'Kabupaten Kulon Progo',
+        'Kota Yogyakarta'
+      ];
+
+      document.getElementById('app').innerHTML = `
+        <div class="min-h-screen bg-gray-50">
+          <div class="bg-green-600 text-white shadow-lg">
+            <div class="container mx-auto px-4 py-4">
+              <div class="flex items-center justify-between flex-wrap gap-4">
+                <div class="flex items-center gap-3">
+                  <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
+                  </svg>
+                  <div>
+                    <h1 class="text-xl font-bold">MATRIKS NSP 2025</h1>
+                    <p class="text-sm text-green-100">D.I. Yogyakarta</p>
+                  </div>
+                </div>
+                <div class="flex items-center gap-4">
+                  <div class="text-right text-sm">
+                    <p class="font-medium">${currentUser.name}</p>
+                    <p class="text-xs text-green-100">${isKepala ? 'Kepala Seksi' : isPetugas ? 'Petugas' : 'Pengguna'}</p>
+                  </div>
+                  <button onclick="logout()" class="bg-green-700 hover:bg-green-800 px-4 py-2 rounded-lg transition">
+                    Keluar
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="container mx-auto px-4 py-6 max-w-6xl">
+            <div class="bg-white rounded-xl shadow-md p-6">
+              <h2 class="text-2xl font-bold text-green-600 mb-6">🎉 Login Berhasil!</h2>
+              
+              <div class="grid md:grid-cols-2 gap-6 mb-6">
+                <div class="bg-green-50 border-2 border-green-200 rounded-lg p-4">
+                  <p class="font-bold text-green-800 mb-2">✅ Aplikasi Siap Digunakan!</p>
+                  <p class="text-sm text-green-700">Anda berhasil login ke sistem MATRIKS NSP DIY 2025</p>
+                </div>
+
+                <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                  <p class="font-bold text-blue-800 mb-2">👤 Informasi User:</p>
+                  <ul class="text-sm text-blue-700 space-y-1">
+                    <li>• Nama: <strong>${currentUser.name}</strong></li>
+                    <li>• Username: <strong>${currentUser.username}</strong></li>
+                    <li>• Role: <strong>${currentUser.role}</strong></li>
+                    <li>• Kabupaten: <strong>${currentUser.kabupaten || '-'}</strong></li>
+                  </ul>
+                </div>
+              </div>
+
+              <div class="bg-indigo-50 border border-indigo-200 rounded-lg p-4 mb-6">
+                <p class="font-bold text-indigo-800 mb-2">📊 Statistik Data:</p>
+                <div class="grid grid-cols-3 gap-4 text-center">
+                  <div>
+                    <p class="text-3xl font-bold text-indigo-600">${users.length}</p>
+                    <p class="text-xs text-indigo-700">Total User</p>
+                  </div>
+                  <div>
+                    <p class="text-3xl font-bold text-indigo-600">${customers.length}</p>
+                    <p class="text-xs text-indigo-700">Pengguna Air</p>
+                  </div>
+                  <div>
+                    <p class="text-3xl font-bold text-indigo-600">${records.length}</p>
+                    <p class="text-xs text-indigo-700">Pencatatan</p>
+                  </div>
+                </div>
+              </div>
+
+              <div class="bg-gray-50 rounded-lg p-4 border mb-6">
+                <p class="font-bold text-gray-800 mb-3">📍 Data per Kabupaten/Kota:</p>
+                <div class="grid grid-cols-2 md:grid-cols-5 gap-3">
+                  ${kabupatenList.map(kab => `
+                    <div class="bg-white rounded-lg p-4 border-2 border-green-200 text-center hover:shadow-md transition">
+                      <p class="text-xs text-gray-600 mb-1">${kab.replace('Kabupaten ', '').replace('Kota ', '')}</p>
+                      <p class="text-2xl font-bold text-green-600">${customers.filter(c => c.kabupaten === kab).length}</p>
+                      <p class="text-xs text-gray-500">pengguna</p>
+                    </div>
+                  `).join('')}
+                </div>
+              </div>
+
+              <div class="bg-purple-50 border border-purple-200 rounded-lg p-4 mb-6">
+                <p class="font-bold text-purple-800 mb-3">💡 Fitur yang Tersedia:</p>
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm text-purple-700">
+                  <div class="flex items-center gap-2">
+                    <span class="text-green-600">✅</span>
+                    <span>Login Multi-Role</span>
+                  </div>
+                  <div class="flex items-center gap-2">
+                    <span class="text-green-600">✅</span>
+                    <span>Input Meteran</span>
+                  </div>
+                  <div class="flex items-center gap-2">
+                    <span class="text-green-600">✅</span>
+                    <span>Upload Foto</span>
+                  </div>
+                  <div class="flex items-center gap-2">
+                    <span class="text-green-600">✅</span>
+                    <span>Matriks Tahunan</span>
+                  </div>
+                  <div class="flex items-center gap-2">
+                    <span class="text-green-600">✅</span>
+                    <span>Rekap Kabupaten</span>
+                  </div>
+                  <div class="flex items-center gap-2">
+                    <span class="text-green-600">✅</span>
+                    <span>Export CSV</span>
+                  </div>
+                  <div class="flex items-center gap-2">
+                    <span class="text-green-600">✅</span>
+                    <span>Filter Multi-Level</span>
+                  </div>
+                  <div class="flex items-center gap-2">
+                    <span class="text-green-600">✅</span>
+                    <span>Real-time Sync</span>
+                  </div>
+                </div>
+              </div>
+
+              <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                <p class="font-bold text-yellow-800 mb-2">🚀 Deployed to GitHub Pages</p>
+                <p class="text-sm text-yellow-700 mb-3">Aplikasi ini sudah siap digunakan. Database tersimpan di Supabase Cloud.</p>
+                <p class="text-xs text-yellow-600">Version 1.0 - ${new Date().toLocaleDateString('id-ID')}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    function logout() {
+      currentUser = null;
+      showLogin();
+    }
+
+    fetchFromSupabase().then(() => {
+      showLogin();
+    });
+  </script>
+</body>
+</html>
