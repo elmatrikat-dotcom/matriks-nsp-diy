@@ -501,20 +501,5 @@
                   <button onclick="showTab('customers')" class="px-4 py-3 text-sm font-medium ${activeTab==='customers'?'border-b-2 border-green-600 text-green-600':'text-gray-600 hover:text-gray-800'}">Pengguna</button>
                   <button onclick="showTab('input')" class="px-4 py-3 text-sm font-medium ${activeTab==='input'?'border-b-2 border-green-600 text-green-600':'text-gray-600 hover:text-gray-800'}">Input</button>
                   <button onclick="showTab('matrix')" class="px-4 py-3 text-sm font-medium ${activeTab==='matrix'?'border-b-2 border-green-600 text-green-600':'text-gray-600 hover:text-gray-800'}">Matriks</button>
-              </div>
-            </div>
-          </div>
-
-          <div class="container mx-auto px-4 py-6 max-w-7xl">
-            ${content}
-          </div>
-        </div>
-      `;
-    }
-
-    fetchFromSupabase().then(() => {
-      showLogin();
-    });
-  </script>
-</body>
-</html>
+                ` : ''}
+              </div
